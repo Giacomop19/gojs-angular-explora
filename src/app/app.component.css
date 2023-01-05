@@ -1,42 +1,258 @@
-@import url(http://fonts.googleapis.com/css?family=Roboto:400,400italic,500,500italic,700,700italic,900,900italic,300italic,300,100italic,100);
-
-body {
-   font-family: 'Roboto', sans-serif;
+.form-check-input[type="checkbox"]:checked:focus, .form-check-input[type="checkbox"]:checked {
+	background-color: #26485a !important;
 }
 
-.myDiagramDiv {
-  background: whitesmoke;
-  width: 700px;
-  height: 300px;
-  border: 1px solid black;
+.form-check-input:checked {	
+	border-color: #26485a !important;
 }
 
-.myPaletteDiv {
-  background: lightcyan;
-  border: 1px solid navy;
-  width: 125px;
-  height: 300px;
+.btn-sm {
+	font-size: .65rem !important;
 }
 
-.myOverviewDiv {
-  width: 200px;
-  height: 150px;
-  background: whitesmoke;
-  border: 1px solid black;
+.bd-example-modal-lg .modal-dialog {
+  display: table;
+  position: relative;
+  margin: 0 auto;
+  top: calc(50% - 24px);
 }
 
-.left {
-  float: left;
-  padding: 5px;
-  margin: 5px;
+.bd-example-modal-lg .modal-dialog .modal-content {
+  background-color: transparent;
+  border: none;
 }
 
-.box {
-  border: solid 1px black;
-  background: whitesmoke;
-  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+button {
+	box-shadow: none !important;
 }
 
-.clear {
-  clear: both;
+label {
+  font-weight: unset !important;
+}
+
+.slider {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 10px;
+  border-radius: 5px;
+  background: #d3d3d3;
+  outline: none;
+  opacity: 1;
+  -webkit-transition: .2s;
+  transition: opacity .2s;
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #26485a;
+  cursor: pointer;
+  border: none
+}
+
+.slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #26485a;
+  cursor: pointer;
+  border: none
+}
+
+.myButton {
+  background-color: Transparent;
+  border: none;
+  padding: 3px;
+}
+
+.myImg {
+  width: 24px;
+  height: 24px;
+}
+
+.myContainer {
+  /*display: inline;*/
+  position: relative;
+  padding-left: 17px;
+  margin-bottom: 4px;
+  cursor: pointer;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Hide the browser's default checkbox */
+.myContainer input {
+  position: absolute;
+  opacity: 0 !important;
+  cursor: pointer;
+  height: 0;
+  width: 0;
+}
+
+/* Create a custom checkbox */
+.checkmark {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 15px;
+  width: 15px;
+  background-color: #ccc;
+}
+
+/* On mouse-over, add a grey background color */
+/*.myContainer:hover input ~ .checkmark {*/
+/*  background-color: #26485a;*/
+/*  opacity: .8;*/
+/*}*/
+
+/* When the checkbox is checked, add a blue background */
+.myContainer input:checked ~ .checkmark {
+  background-color: #26485a;
+}
+
+/* Create the checkmark/indicator (hidden when not checked) */
+.checkmark:after {
+  content: "";
+  position: absolute;
+  display: none;
+}
+
+/* Show the checkmark when checked */
+.myContainer input:checked ~ .checkmark:after {
+  display: block;
+}
+
+/* Style the checkmark/indicator */
+.myContainer .checkmark:after {
+  left: 5px;
+  top: 2px;
+  width: 5px;
+  height: 10px;
+  border: solid white;
+  border-width: 0 3px 3px 0;
+  -webkit-transform: rotate(45deg);
+  -ms-transform: rotate(45deg);
+  transform: rotate(45deg);
+}
+
+table {
+  font-family: 'roboto';
+  font-weight: 500;
+  border-collapse: collapse;
+  width: 100%;
+}
+
+td, th {
+  border: .5px solid #e9e9e9;
+  text-align: left;
+  padding: 3px;
+  min-width: 3rem;
+  text-align: center;
+}
+
+/*tr {*/
+/*  border-bottom: .5px solid #e9e9e9;*/
+/*}*/
+
+tr:nth-child(even) {
+  background-color: #f2f2f2;
+}
+
+tr:nth-child(odd) {
+  background-color: white;
+}
+
+.busy-loading {
+  z-index: 9999;
+}
+
+.busy-loading:not(:required)::after {
+  animation: 1500ms linear 0s normal none infinite running spinner;
+  border-radius: 0.5em;
+  box-shadow: 1.5em 0 0 0 rgba(0, 0, 0, 0.75), 1.1em 1.1em 0 0 rgba(0, 0, 0, 0.75), 0 1.5em 0 0 rgba(0, 0, 0, 0.75), -1.1em 1.1em 0 0 rgba(0, 0, 0, 0.75), -1.5em 0 0 0 rgba(0, 0, 0, 0.75), -1.1em -1.1em 0 0 rgba(0, 0, 0, 0.75), 0 -1.5em 0 0 rgba(0, 0, 0, 0.75), 1.1em -1.1em 0 0 rgba(0, 0, 0, 0.75);
+  content: "";
+  display: inherit;
+  font-size: 10px;
+  height: 1em;
+  left: 50%;
+  margin: 0 auto;
+  overflow: visible;
+  position: absolute;
+  top: 50%;
+  width: 1em;
+  z-index: 9999;
+}
+
+/* Animation */
+@-webkit-keyframes spinner {
+  0% {
+    -webkit-transform: rotate(0deg);
+    -moz-transform: rotate(0deg);
+    -ms-transform: rotate(0deg);
+    -o-transform: rotate(0deg);
+    transform: rotate(0deg);
+  }
+  100% {
+    -webkit-transform: rotate(360deg);
+    -moz-transform: rotate(360deg);
+    -ms-transform: rotate(360deg);
+    -o-transform: rotate(360deg);
+    transform: rotate(360deg);
+  }
+}
+
+@-moz-keyframes spinner {
+  0% {
+    -webkit-transform: rotate(0deg);
+    -moz-transform: rotate(0deg);
+    -ms-transform: rotate(0deg);
+    -o-transform: rotate(0deg);
+    transform: rotate(0deg);
+  }
+  100% {
+    -webkit-transform: rotate(360deg);
+    -moz-transform: rotate(360deg);
+    -ms-transform: rotate(360deg);
+    -o-transform: rotate(360deg);
+    transform: rotate(360deg);
+  }
+}
+
+@-o-keyframes spinner {
+  0% {
+    -webkit-transform: rotate(0deg);
+    -moz-transform: rotate(0deg);
+    -ms-transform: rotate(0deg);
+    -o-transform: rotate(0deg);
+    transform: rotate(0deg);
+  }
+  100% {
+    -webkit-transform: rotate(360deg);
+    -moz-transform: rotate(360deg);
+    -ms-transform: rotate(360deg);
+    -o-transform: rotate(360deg);
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes spinner {
+  0% {
+    -webkit-transform: rotate(0deg);
+    -moz-transform: rotate(0deg);
+    -ms-transform: rotate(0deg);
+    -o-transform: rotate(0deg);
+    transform: rotate(0deg);
+  }
+  100% {
+    -webkit-transform: rotate(360deg);
+    -moz-transform: rotate(360deg);
+    -ms-transform: rotate(360deg);
+    -o-transform: rotate(360deg);
+    transform: rotate(360deg);
+  }
 }

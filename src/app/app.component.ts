@@ -1,228 +1,284 @@
-/**
- * Sample app showcasing gojs-angular components
- * For use with gojs-angular version 2.x
- */
-
-import { ChangeDetectorRef, Component, ViewChild, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
 import * as go from 'gojs';
 import { DataSyncService, DiagramComponent, PaletteComponent } from 'gojs-angular';
 import produce from "immer";
+import { FlowService } from './service/flow.service';
+
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css'],
-  encapsulation: ViewEncapsulation.ShadowDom
 })
-export class AppComponent {
+export class AppComponent implements OnInit{
 
-  @ViewChild('myDiagram', { static: true }) public myDiagramComponent: DiagramComponent;
-  @ViewChild('myPalette', { static: true }) public myPaletteComponent: PaletteComponent;
+  processFlow: any;
+  chartDiv: string
+  orientationValue: number = 90
+  id
+  minWeight: any
+  maxWeight: any
+  arrayTest:any[] = [1,2,3,4,5]
+  buffer 
 
-  // Big object that holds app-level state data
-  // As of gojs-angular 2.0, immutability is expected and required of state for ease of change detection.
-  // Whenever updating state, immutability must be preserved. It is recommended to use immer for this, a small package that makes working with immutable data easy.
-  public state = {
-    // Diagram state props
-    diagramNodeData: [
-      { id: 'Alpha', text: "Alpha", color: 'lightblue', loc: "0 0" },
-      { id: 'Beta', text: "Beta", color: 'orange', loc: "100 0" },
-      { id: 'Gamma', text: "Gamma", color: 'lightgreen', loc: "0 100" },
-      { id: 'Delta', text: "Delta", color: 'pink', loc: "100 100" }
-    ],
-    diagramLinkData: [
-        { key: -1, from: 'Alpha', to: 'Beta', fromPort: 'r', toPort: '1' },
-        { key: -2, from: 'Alpha', to: 'Gamma', fromPort: 'b', toPort: 't' },
-        { key: -3, from: 'Beta', to: 'Beta' },
-        { key: -4, from: 'Gamma', to: 'Delta', fromPort: 'r', toPort: 'l' },
-        { key: -5, from: 'Delta', to: 'Alpha', fromPort: 't', toPort: 'r' }
-    ],
-    diagramModelData: { prop: 'value' },
-    skipsDiagramUpdate: false,
-    selectedNodeData: null, // used by InspectorComponent
+  //variables for html components values
+  positionValuePaused: any
+  @ViewChild('positionValueDiv') positionValueDiv;
 
-    // Palette state props
-    paletteNodeData: [
-      { key: 'Epsilon', text: 'Epsilon', color: 'red' },
-      { key: 'Kappa', text: 'Kappa', color: 'purple' }
-    ],
-    paletteModelData: { prop: 'val' }
-  };
+  //utils
+  framepersec = 30;
+  bufsec = 2 * 60;  // buffer da 2 minuti
+  bufframesize = this.framepersec * this.bufsec;
+  //dateTimePicker -> parametro di confronto [giornaliero,orario] per filtrare endTime - startTime di CaseId
+
+
+  /*
+  clockPicker: any [] = [1,2,3,4,5,6]
+
+  filtering () => (a : clockPicker, a = resultApi.caseId.{positions})
   
-  public diagramDivClassName: string = 'myDiagramDiv';
-  public paletteDivClassName = 'myPaletteDiv';
+  */
 
-  // initialize diagram / templates
-  public initDiagram(): go.Diagram {
+  constructor(private flowService: FlowService){}
 
-    const $ = go.GraphObject.make;
-    const dia = $(go.Diagram, {
-      'undoManager.isEnabled': true,
-      'clickCreatingTool.archetypeNodeData': { text: 'new node', color: 'lightblue' },
-      model: $(go.GraphLinksModel,
-        {
-          nodeKeyProperty: 'id',
-          linkToPortIdProperty: 'toPort',
-          linkFromPortIdProperty: 'fromPort',
-          linkKeyProperty: 'key' // IMPORTANT! must be defined for merges and data sync when using GraphLinksModel
-        }
-      )
-    });
-
-    dia.commandHandler.archetypeGroupData = { key: 'Group', isGroup: true };
-
-    const makePort = function(id: string, spot: go.Spot) {
-      return $(go.Shape, 'Circle',
-        {
-          opacity: .5,
-          fill: 'gray', strokeWidth: 0, desiredSize: new go.Size(8, 8),
-          portId: id, alignment: spot,
-          fromLinkable: true, toLinkable: true
-        }
-      );
-    }
-
-    // define the Node template
-    dia.nodeTemplate =
-      $(go.Node, 'Spot',
-        {
-          contextMenu:
-            $('ContextMenu',
-              $('ContextMenuButton',
-                $(go.TextBlock, 'Group'),
-                { click: function(e, obj) { e.diagram.commandHandler.groupSelection(); } },
-                new go.Binding('visible', '', function(o) {
-                  return o.diagram.selection.count > 1;
-                }).ofObject())
-            )
-        },
-        new go.Binding("location", "loc", go.Point.parse).makeTwoWay(go.Point.stringify),
-        $(go.Panel, 'Auto',
-          $(go.Shape, 'RoundedRectangle', { stroke: null },
-            new go.Binding('fill', 'color', (c, panel) => {
-             
-              return c;
-            })
-          ),
-          $(go.TextBlock, { margin: 8, editable: true },
-            new go.Binding('text').makeTwoWay())
-        ),
-        // Ports
-        makePort('t', go.Spot.TopCenter),
-        makePort('l', go.Spot.Left),
-        makePort('r', go.Spot.Right),
-        makePort('b', go.Spot.BottomCenter)
-      );
-
-    return dia;
+  ngOnInit(): void {
+    this.chartDiv = "processFlow"
+    
   }
 
-  // When the diagram model changes, update app data to reflect those changes. Be sure to use immer's "produce" function to preserve immutability
-  public diagramModelChange = function(changes: go.IncrementalData) {
-    if (!changes) return;
-    const appComp = this;
-    this.state = produce(this.state, draft => {
-      // set skipsDiagramUpdate: true since GoJS already has this update
-      // this way, we don't log an unneeded transaction in the Diagram's undoManager history
-      draft.skipsDiagramUpdate = true;
-      draft.diagramNodeData = DataSyncService.syncNodeData(changes, draft.diagramNodeData, appComp.observedDiagram.model);
-      draft.diagramLinkData = DataSyncService.syncLinkData(changes, draft.diagramLinkData, appComp.observedDiagram.model);
-      draft.diagramModelData = DataSyncService.syncModelData(changes, draft.diagramModelData);
-      // If one of the modified nodes was the selected node used by the inspector, update the inspector selectedNodeData object
-      const modifiedNodeDatas = changes.modifiedNodeData;
-      if (modifiedNodeDatas && draft.selectedNodeData) {
-        for (let i = 0; i < modifiedNodeDatas.length; i++) {
-          const mn = modifiedNodeDatas[i];
-          const nodeKeyProperty = appComp.myDiagramComponent.diagram.model.nodeKeyProperty as string;
-          if (mn[nodeKeyProperty] === draft.selectedNodeData[nodeKeyProperty]) {
-            draft.selectedNodeData = mn;
-          }
-        }
-      }
-    });
-  };
+  ngAfterViewInit(): void{
+   
+    go.Diagram.licenseKey = "73f042e0b71c28c702d90776423d6bf919a52a60cf8519a35a0447f7e808381c279de87154d7d9c6d5f948fa4a7bc28adfc03b3b874a0268b231848f46b6d6ffbb377abb100c4787f40773c5c9fa7aa6fd7a78a2cbb122f7d97b88f5b9a190c95dedfa874ace0abb2a795661042ea658a7fd8c2bff029e1f6a7f88a4fbe9a756f97372";
+    
+    //HERE STARTS THE COMPOSITION OF THE DIAGRAM
+    //defining the diagram
+    var $ = go.GraphObject.make;
+    this.processFlow = $(go.Diagram, this.chartDiv,{
+      initialAutoScale: go.Diagram.Uniform,
+      contentAlignment: go.Spot.Center,
+      layout: $(go.LayeredDigraphLayout,
+        {
+          direction: this.orientationValue,
+          setsPortSpots: false,
+          
+        })
+    })
+    this.processFlow.isReadOnly = true
+    this.processFlow.animationManager.isEnabled = false
 
-  public initPalette(): go.Palette {
-    const $ = go.GraphObject.make;
-    const palette = $(go.Palette);
-
-    // define the Node template
-    palette.nodeTemplate =
-      $(go.Node, 'Auto',
-        $(go.Shape, 'RoundedRectangle',
-          {
-            stroke: null
+    //defining node's template (ATTIVITA')
+    this.processFlow.nodeTemplate = $(go.Node, "Spot",
+      $(go.Shape,"RoundedRectangle", {
+          fill: "rgb(255,199,0)",
+          stroke: null,
+          width: 170,
+          height: 50
           },
-          new go.Binding('fill', 'color')
+          new go.Binding("fill", "color")
+        ),    
+        $(go.TextBlock,{
+          font: "bold 14px Helvetica",
+          alignment: new go.Spot(0.5, 0.2),
+          alignmentFocus: go.Spot.Top,
+          overflow: go.TextBlock.OverflowEllipsis,
+          maxLines: 1,
+          wrap: go.TextBlock.None,
+          maxSize: new go.Size(160, NaN),
+        },
+        new go.Binding("text", "key")
+        )
+    );
+    this.processFlow.linkTemplate = $(go.Link, {
+        reshapable: true,
+        routing: go.Link.None,
+        curve: go.Link.Bezier
+      },
+      $(go.Shape, {
+        stroke: "black"
+        },
+        new go.Binding("strokeWidth", "width")
+      ),
+    )
+
+    this.processFlow.nodeTemplateMap.add("start",
+      $(go.Node, "Auto", {
+          selectionAdorned: false,
+        },
+        $(go.Shape, "Ellipse", {
+            fill: "white",
+            width: 100,
+            height: 50
+          }
         ),
-        $(go.TextBlock, { margin: 8 },
-          new go.Binding('text', 'key'))
-      );
+        $(go.TextBlock, {
+            font: "bold 14px Helvetica",
+            overflow: go.TextBlock.OverflowEllipsis,
+            maxLines: 1,
+            wrap: go.TextBlock.None,
+            maxSize: new go.Size(90, NaN),
+            margin: 5,
+            stroke: "green"
+          },
+          new go.Binding("text", "key")
+        )
+      )
+    );
+    this.processFlow.nodeTemplateMap.add("stop",
+      $(go.Node, "Auto", {
+          selectionAdorned: false,
+        },
+        $(go.Shape, "Ellipse", {
+            fill: "white",
+            width: 100,
+            height: 50
+          }
+        ),
+        $(go.TextBlock, {
+            font: "bold 14px Helvetica",
+            overflow: go.TextBlock.OverflowEllipsis,
+            maxLines: 1,
+            wrap: go.TextBlock.None,
+            maxSize: new go.Size(90, NaN),
+            margin: 5,
+            stroke: "red"
+          },
+          new go.Binding("text", "key")
+        )
+      )
+    );
+    this.processFlow.addDiagramListener("SelectionMoved", (e: any) => {
+        // this.drawAnimation();
+    });
+    this.processFlow.addDiagramListener("LinkReshaped", (e: any) => {
+        // this.drawAnimation();
+    });
+    // this.processFlow.addDiagramListener("ObjectDoubleClicked", (e: any) => {
+    //   if (isNaN(this.id)) {
+    //     var part = e.subject.part;
+    //     if (part instanceof go.Node) {
+    //       this.showNodeInfo(part.data.keyHash);
+    //       console.log(part.data);
 
-    palette.model = $(go.GraphLinksModel);
-    return palette;
+    //     } else if (part instanceof go.Link) {
+    //       this.showLinkInfo(part.fromNode.data.keyHash, part.toNode.data.keyHash);
+    //       console.log(part.fromNode, part.toNode);
+          
+    //     } else if (part.data.category == "token") {
+    //       this.showTokenInfo(part.data.keyHash);
+    //     }
+    //   }
+    // });
+
+    this.loadFlowData()
   }
 
-  constructor(private cdr: ChangeDetectorRef) { }
+  //LOADING THE DATA FROM SERVICE
+  loadFlowData(){
+    this.flowService.getData().subscribe(
+      (succ) =>{
+        let flowData = succ
+        console.log(flowData)
+        console.log("array" , flowData.caseFlow["nodeDataArray"])
+        this.processFlow.model = go.Model.fromJson(flowData.caseFlow)
+        console.log(this.processFlow.model)
+        this.minWeight = flowData.minWeight;
+        this.maxWeight = flowData.maxWeight;
 
-  // Overview Component testing
-  public oDivClassName = 'myOverviewDiv';
-  public initOverview(): go.Overview {
-    const $ = go.GraphObject.make;
-    const overview = $(go.Overview);
-    return overview;
+        // this.flowService.sortData(1, 'data', flowData); 
+    })
   }
-  public observedDiagram = null;
+  //PLAYDATA
+  playData(){
 
-  // currently selected node; for inspector
-  public selectedNodeData: go.ObjectData = null;
+    if (this.positionValuePaused != parseInt(this.positionValueDiv.nativeElement.value)) {
+      this.buffer[0] = {
+        startTime: parseInt(this.positionValueDiv.nativeElement.value),
+        endTime: parseInt(this.positionValueDiv.nativeElement.value) + parseInt(this.positionValueDiv.nativeElement.step) * this.bufframesize,
+        datiAnimazione: null
+      };
+      this.buffer[1] = null;
+      
+    this.loadFlowAnimation()
+    console.log("playing flow")
+    }else{
+      console.log("not playing data")
+    }
+  }
+  //STOPDATA
+  stopData(){
+    console.log("stopping flow")
+  }
+  //PAUSEDATA
+  pauseData(){
+    console.log("pausing flow")
+  }
 
-  public ngAfterViewInit() {
-    if (this.observedDiagram) return;
-    this.observedDiagram = this.myDiagramComponent.diagram;
-    this.cdr.detectChanges(); // IMPORTANT: without this, Angular will throw ExpressionChangedAfterItHasBeenCheckedError (dev mode only)
+  //BUILDING THE FLOW PROCESS
+  loadFlowAnimation(){
 
-    const appComp: AppComponent = this;
-    // listener for inspector
-    this.myDiagramComponent.diagram.addDiagramListener('ChangedSelection', function(e) {
-      if (e.diagram.selection.count === 0) {
-        appComp.selectedNodeData = null;
-      }
-      const node = e.diagram.selection.first();
-      appComp.state = produce(appComp.state, draft => {
-        if (node instanceof go.Node) {
-          var idx = draft.diagramNodeData.findIndex(nd => nd.id == node.data.id);
-          var nd = draft.diagramNodeData[idx];
-          draft.selectedNodeData = nd;
-        } else {
-          draft.selectedNodeData = null;
-        }
-      });
-    });
-  } // end ngAfterViewInit
+    //if di controllo
 
+    const loadProcessAnim = () => {
+      this.flowService.processFlowAnimation1().subscribe(
+        (succ) => {
+          this.buffer = succ
+          this.drawAnimation()
+  
+  
+  
+      })
+    }
+    loadProcessAnim()
+  }
 
-  /**
-   * Update a node's data based on some change to an inspector row's input
-   * @param changedPropAndVal An object with 2 entries: "prop" (the node data prop changed), and "newVal" (the value the user entered in the inspector <input>)
-   */
-  public handleInspectorChange(changedPropAndVal) {
+  //BUILDING THE FLOW ANIMATION
+  drawAnimation(){
 
-    const path = changedPropAndVal.prop;
-    const value = changedPropAndVal.newVal;
+  }
 
-    this.state = produce(this.state, draft => {
-      var data = draft.selectedNodeData;
-      data[path] = value;
-      const key = data.id;
-      const idx = draft.diagramNodeData.findIndex(nd => nd.id == key);
-      if (idx >= 0) {
-        draft.diagramNodeData[idx] = data;
-        draft.skipsDiagramUpdate = false; // we need to sync GoJS data with this new app state, so do not skips Diagram update
-      }
-    });
+  //MODALS
+  showNodeInfo(act: any) {
+    // this.showLoadingSpinner(true);
+    // this.disableButtons();
+
+    //const loadProcessFlow = () => {
+      // this.flowService.processFlowNode(act, this.benchmarkIndex).subscribe(
+      //   (succ) => {
+      //     let activityInfo;
+      //     activityInfo = succ;
+      //     activityInfo.t = this.secondToTime(activityInfo.t);
+      //     activityInfo.maxd = this.secondToTime(activityInfo.maxd);
+      //     activityInfo.mind = this.secondToTime(activityInfo.mind);
+          
+      //      if (activityInfo != null) {
+      //       this.modalActivity = this.actvModalService.open(ActivityModalComponent, {
+      //         data: {
+      //           actvName: activityInfo.cls,
+      //           actvFreq: activityInfo.freq,
+      //           actvT: activityInfo.t,
+      //           actvMaxc: activityInfo.maxc,
+      //           actvMaxd: activityInfo.maxd,
+      //           actvMaxt: activityInfo.maxt,
+      //           actvMinc: activityInfo.minc,
+      //           actvMind: activityInfo.mind,
+      //           actvMint: activityInfo.mint
+      //         }
+      //       });
+            
+      //       this.showLoadingSpinner(false);
+      //       this.disableButtons();           
+      //     }      
+      //   },
+      //   (err) => {
+      //     console.log(err);
+      //   }
+      // );
+    //}
+    //loadProcessFlow();
   }
 
 
 }
+
+  
 

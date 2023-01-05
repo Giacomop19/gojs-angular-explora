@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { BrowserModule } from '@angular/platform-browser';
 import { GojsAngularModule } from 'gojs-angular';
 import { AppComponent } from './app.component';
+import { HttpClientModule } from '@angular/common/http';
 
 import { InspectorComponent } from './inspector/inspector.component';
 import { InspectorRowComponent } from './inspector/inspector-row.component';
@@ -17,7 +18,8 @@ import { InspectorRowComponent } from './inspector/inspector-row.component';
   imports: [
     BrowserModule,
     FormsModule,
-    GojsAngularModule
+    GojsAngularModule,
+    HttpClientModule
   ],
   providers: [],
   bootstrap: [AppComponent]

@@ -8,7 +8,26 @@
   <ng-container>
     <ng-container *ngTemplateOutlet="flowControls"></ng-container>
   </ng-container>
-
+  <div>
+    <label>Speed:</label>
+    <select [formControl]="timeSelectValue" #speedValueDiv [ngModel]="timeSelectOptions" (ngModelChange)="speedChangedSelection($event)">
+      <option *ngFor="let option of timeSelectOptions" [value]="option.value">{{option.label}}</option>
+    </select>
+  <div>
+  <div>
+    Position:
+    <input style="width: 100px;" id="positionValue" #positionValueDiv type="range" 
+      class="slider" min="0" max="1000" step="1" value="0" (change)="positionChanged()" 
+      />
+  </div>
+  <div class="me-1">Step:</div>
+  <button  class="btn btn-sm btn-primary btn-rounded btn-floating me-1" type="button" id="stepBack" #stepBackDiv (click)="stepBack()">
+    <i class="fas fa-minus"></i>
+  </button>
+  <button  class="btn btn-sm btn-primary btn-rounded btn-floating me-1" type="button" id="stepForward" #stepForwardDiv (click)="stepForward()">
+    <i class="fas fa-plus"></i>
+  </button>
+</div>
 </div>
 
 <ng-template #flowControls>

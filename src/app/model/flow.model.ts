@@ -1,5 +1,5 @@
 export class FlowModel {
-    caseFlow: Object;
+    caseFlow: any;
     initialStep: number;
     maxEndTime: number;
     maxWeight: number;

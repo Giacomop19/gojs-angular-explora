@@ -1,12 +1,12 @@
 import { NgModule } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { BrowserModule } from '@angular/platform-browser';
 import { GojsAngularModule } from 'gojs-angular';
 import { AppComponent } from './app.component';
 import { HttpClientModule } from '@angular/common/http';
-
 import { InspectorComponent } from './inspector/inspector.component';
 import { InspectorRowComponent } from './inspector/inspector-row.component';
+
 
 
 @NgModule({
@@ -19,7 +19,8 @@ import { InspectorRowComponent } from './inspector/inspector-row.component';
     BrowserModule,
     FormsModule,
     GojsAngularModule,
-    HttpClientModule
+    HttpClientModule,
+    ReactiveFormsModule
   ],
   providers: [],
   bootstrap: [AppComponent]
